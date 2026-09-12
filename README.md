@@ -1,5 +1,7 @@
 # Smart Timetable Generator
 
+[![Java CI](https://github.com/samikshanigam9/SmartTimetableGenerator/actions/workflows/ci.yml/badge.svg)](https://github.com/samikshanigam9/SmartTimetableGenerator/actions/workflows/ci.yml)
+
 A Java-based scheduling system that assigns classes to teachers, student sections, classrooms, and time slots while preventing timetable conflicts and respecting classroom capacity.
 
 ## Why this project
@@ -18,16 +20,27 @@ Manual timetable creation becomes difficult when multiple constraints must be sa
 - Interactive console input
 - Table-formatted timetable output
 - Comparative benchmark with 120 class requests
+- Automated unit tests and GitHub Actions CI
 
 ## Tech Stack
 
-- Java
+- Java 11+
 - Object-Oriented Programming
 - HashMap
 - LinkedList
 - Arrays
 - Greedy Algorithm
+- Maven
+- JUnit 5
+- GitHub Actions
 - IntelliJ IDEA
+
+## Requirements
+
+- JDK 11 or later
+- Maven 3.8+ for the Maven build and tests
+
+The comparative benchmark results documented below were validated in a Java 21 environment.
 
 ## How the Scheduling Works
 
@@ -64,22 +77,26 @@ Used for teachers, classrooms, time slots, and class requests.
 
 ```text
 SmartTimetableGenerator/
+├── .github/workflows/ci.yml
+├── LICENSE
+├── pom.xml
 ├── README.md
 ├── .gitignore
-└── src/
-    └── com/
-        └── samiksha/
-            └── timetable/
-                ├── Main.java
-                ├── InteractiveMain.java
-                ├── Benchmark.java
-                ├── Teacher.java
-                ├── Classroom.java
-                ├── TimeSlot.java
-                ├── ClassRequest.java
-                ├── ClassSchedule.java
-                ├── Timetable.java
-                └── TimetableGenerator.java
+├── src/
+│   └── com/samiksha/timetable/
+│       ├── Main.java
+│       ├── InteractiveMain.java
+│       ├── Benchmark.java
+│       ├── Teacher.java
+│       ├── Classroom.java
+│       ├── TimeSlot.java
+│       ├── ClassRequest.java
+│       ├── ClassSchedule.java
+│       ├── Timetable.java
+│       └── TimetableGenerator.java
+└── test/
+    └── com/samiksha/timetable/
+        └── TimetableTest.java
 ```
 
 ## Main Classes
@@ -93,6 +110,18 @@ SmartTimetableGenerator/
 - `TimetableGenerator` — applies the greedy scheduling strategy.
 - `InteractiveMain` — accepts user input from the console.
 - `Benchmark` — compares HashMap-based conflict checks with a linear-scan baseline.
+
+## Build and Test
+
+Run the automated tests:
+
+```bash
+mvn clean test
+```
+
+The test suite checks successful scheduling plus teacher, classroom, and student-section conflict rejection.
+
+GitHub Actions runs the Maven test suite on Java 11 and Java 21 for pushes and pull requests targeting `main`.
 
 ## How to Run
 
@@ -196,6 +225,8 @@ Conflict checks use `HashMap.containsKey()`, which is average `O(1)`.
 - Lambda expressions
 - Conflict detection
 - Complexity analysis
+- Unit testing with JUnit 5
+- Continuous integration with GitHub Actions
 - Comparative benchmarking with `System.nanoTime()`
 
 ## Future Improvements
@@ -206,8 +237,11 @@ Conflict checks use `HashMap.containsKey()`, which is average `O(1)`.
 - Laboratory scheduling
 - Break-time constraints
 - GUI or web dashboard
-- Automated unit tests
 - Alternative optimization approaches for larger scheduling problems
+
+## License
+
+This project is licensed under the MIT License. See `LICENSE` for details.
 
 ## Author
 
