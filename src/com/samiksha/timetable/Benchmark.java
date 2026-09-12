@@ -1,15 +1,282 @@
 package com.samiksha.timetable;
 
+import java.util.Arrays;
+import java.util.LinkedList;
+
 public class Benchmark {
+
+    private static final int TOTAL_REQUESTS = 120;
+    private static final int WARMUP_RUNS = 200;
+    private static final int MEASURED_RUNS = 1000;
 
     public static void main(String[] args) {
 
-        int totalRequests = 120;
+        ClassRequest[] requests = createRequests();
+        Classroom[] classrooms = createClassrooms();
+        TimeSlot[] timeSlots = createTimeSlots();
 
+        // Warm up the JVM before collecting timings.
+        for (int i = 0; i < WARMUP_RUNS; i++) {
+            runOptimizedSchedule(requests, classrooms, timeSlots);
+            runLinearScanSchedule(requests, classrooms, timeSlots);
+        }
+
+        int optimizedScheduled =
+                runOptimizedSchedule(requests, classrooms, timeSlots);
+
+        int baselineScheduled =
+                runLinearScanSchedule(requests, classrooms, timeSlots);
+
+        long optimizedTotalTime = 0L;
+        long baselineTotalTime = 0L;
+
+        for (int i = 0; i < MEASURED_RUNS; i++) {
+
+            // Alternate execution order to reduce ordering bias.
+            if (i % 2 == 0) {
+                baselineTotalTime += measureLinearScan(
+                        requests,
+                        classrooms,
+                        timeSlots
+                );
+
+                optimizedTotalTime += measureOptimized(
+                        requests,
+                        classrooms,
+                        timeSlots
+                );
+            } else {
+                optimizedTotalTime += measureOptimized(
+                        requests,
+                        classrooms,
+                        timeSlots
+                );
+
+                baselineTotalTime += measureLinearScan(
+                        requests,
+                        classrooms,
+                        timeSlots
+                );
+            }
+        }
+
+        double optimizedAverageMs =
+                optimizedTotalTime / (double) MEASURED_RUNS / 1_000_000.0;
+
+        double baselineAverageMs =
+                baselineTotalTime / (double) MEASURED_RUNS / 1_000_000.0;
+
+        double improvementPercent =
+                ((baselineAverageMs - optimizedAverageMs)
+                        / baselineAverageMs) * 100.0;
+
+        System.out.println();
+        System.out.println("COMPARATIVE BENCHMARK RESULTS");
+        System.out.println("----------------------------------------");
+        System.out.println("Requests per run: " + TOTAL_REQUESTS);
+        System.out.println("Warm-up runs: " + WARMUP_RUNS);
+        System.out.println("Measured runs: " + MEASURED_RUNS);
+        System.out.println();
+
+        System.out.println(
+                "Optimized scheduled: " + optimizedScheduled
+        );
+
+        System.out.println(
+                "Linear-scan scheduled: " + baselineScheduled
+        );
+
+        System.out.printf(
+                "Optimized average time: %.4f ms%n",
+                optimizedAverageMs
+        );
+
+        System.out.printf(
+                "Linear-scan average time: %.4f ms%n",
+                baselineAverageMs
+        );
+
+        System.out.printf(
+                "Measured improvement: %.2f%%%n",
+                improvementPercent
+        );
+
+        System.out.println();
+        System.out.println(
+                "Note: Runtime results vary by JVM, hardware, and system load."
+        );
+    }
+
+    private static long measureOptimized(
+            ClassRequest[] requests,
+            Classroom[] classrooms,
+            TimeSlot[] timeSlots
+    ) {
+        long start = System.nanoTime();
+
+        runOptimizedSchedule(
+                requests,
+                classrooms,
+                timeSlots
+        );
+
+        return System.nanoTime() - start;
+    }
+
+    private static long measureLinearScan(
+            ClassRequest[] requests,
+            Classroom[] classrooms,
+            TimeSlot[] timeSlots
+    ) {
+        long start = System.nanoTime();
+
+        runLinearScanSchedule(
+                requests,
+                classrooms,
+                timeSlots
+        );
+
+        return System.nanoTime() - start;
+    }
+
+    private static int runOptimizedSchedule(
+            ClassRequest[] requests,
+            Classroom[] classrooms,
+            TimeSlot[] timeSlots
+    ) {
+        TimetableGenerator generator =
+                new TimetableGenerator(
+                        classrooms,
+                        timeSlots
+                );
+
+        generator.generateSchedule(requests);
+
+        return generator.getScheduledCount();
+    }
+
+    private static int runLinearScanSchedule(
+            ClassRequest[] requests,
+            Classroom[] classrooms,
+            TimeSlot[] timeSlots
+    ) {
+        ClassRequest[] sortedRequests = requests.clone();
+        Classroom[] sortedClassrooms = classrooms.clone();
+
+        Arrays.sort(
+                sortedRequests,
+                (request1, request2) ->
+                        Integer.compare(
+                                request2.getStudentCount(),
+                                request1.getStudentCount()
+                        )
+        );
+
+        Arrays.sort(
+                sortedClassrooms,
+                (room1, room2) ->
+                        Integer.compare(
+                                room1.getCapacity(),
+                                room2.getCapacity()
+                        )
+        );
+
+        LinkedList<ClassSchedule> schedules =
+                new LinkedList<>();
+
+        for (ClassRequest request : sortedRequests) {
+
+            boolean scheduled = false;
+
+            for (TimeSlot timeSlot : timeSlots) {
+
+                for (Classroom classroom : sortedClassrooms) {
+
+                    if (classroom.getCapacity()
+                            < request.getStudentCount()) {
+                        continue;
+                    }
+
+                    if (hasConflict(
+                            schedules,
+                            request,
+                            classroom,
+                            timeSlot
+                    )) {
+                        continue;
+                    }
+
+                    schedules.add(
+                            new ClassSchedule(
+                                    request.getTeacher(),
+                                    classroom,
+                                    timeSlot,
+                                    request.getSection(),
+                                    request.getStudentCount()
+                            )
+                    );
+
+                    scheduled = true;
+                    break;
+                }
+
+                if (scheduled) {
+                    break;
+                }
+            }
+        }
+
+        return schedules.size();
+    }
+
+    private static boolean hasConflict(
+            LinkedList<ClassSchedule> schedules,
+            ClassRequest request,
+            Classroom classroom,
+            TimeSlot timeSlot
+    ) {
+        for (ClassSchedule existing : schedules) {
+
+            if (!sameTimeSlot(
+                    existing.getTimeSlot(),
+                    timeSlot
+            )) {
+                continue;
+            }
+
+            if (existing.getTeacher().getTeacherId()
+                    == request.getTeacher().getTeacherId()) {
+                return true;
+            }
+
+            if (existing.getClassroom().getRoomNumber()
+                    .equals(classroom.getRoomNumber())) {
+                return true;
+            }
+
+            if (existing.getSection()
+                    .equals(request.getSection())) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private static boolean sameTimeSlot(
+            TimeSlot first,
+            TimeSlot second
+    ) {
+        return first.getDay().equals(second.getDay())
+                && first.getStartTime().equals(second.getStartTime())
+                && first.getEndTime().equals(second.getEndTime());
+    }
+
+    private static ClassRequest[] createRequests() {
         ClassRequest[] requests =
-                new ClassRequest[totalRequests];
+                new ClassRequest[TOTAL_REQUESTS];
 
-        for (int i = 0; i < totalRequests; i++) {
+        for (int i = 0; i < TOTAL_REQUESTS; i++) {
 
             Teacher teacher = new Teacher(
                     i + 1,
@@ -24,13 +291,19 @@ public class Benchmark {
             );
         }
 
-        Classroom[] classrooms = {
+        return requests;
+    }
 
+    private static Classroom[] createClassrooms() {
+        return new Classroom[]{
                 new Classroom("C101", 40),
                 new Classroom("C102", 50),
                 new Classroom("C103", 60),
                 new Classroom("C104", 80)
         };
+    }
+
+    private static TimeSlot[] createTimeSlots() {
 
         String[] days = {
                 "Monday",
@@ -68,7 +341,6 @@ public class Benchmark {
         int index = 0;
 
         for (String day : days) {
-
             for (int i = 0; i < startTimes.length; i++) {
 
                 timeSlots[index] = new TimeSlot(
@@ -81,40 +353,6 @@ public class Benchmark {
             }
         }
 
-        TimetableGenerator generator =
-                new TimetableGenerator(
-                        classrooms,
-                        timeSlots
-                );
-
-        long startTime = System.nanoTime();
-
-        generator.generateSchedule(requests);
-
-        long endTime = System.nanoTime();
-
-        int scheduled = generator.getScheduledCount();
-        int failed = totalRequests - scheduled;
-
-        double timeInMilliseconds =
-                (endTime - startTime) / 1_000_000.0;
-
-        System.out.println();
-        System.out.println("BENCHMARK RESULTS");
-        System.out.println("----------------------------");
-        System.out.println("Requests received: " + totalRequests);
-        System.out.println("Successfully scheduled: " + scheduled);
-        System.out.println("Failed requests: " + failed);
-
-        System.out.printf(
-                "Generation time: %.3f ms%n",
-                timeInMilliseconds
-        );
-
-        if (scheduled == totalRequests) {
-            System.out.println("Benchmark status: PASSED");
-        } else {
-            System.out.println("Benchmark status: PARTIALLY PASSED");
-        }
+        return timeSlots;
     }
 }
