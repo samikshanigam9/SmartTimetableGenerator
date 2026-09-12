@@ -2,6 +2,7 @@
 .idea/
 *.iml
 out/
+target/
 !**/src/main/**/out/
 !**/src/test/**/out/
 .kotlin
@@ -11,7 +12,7 @@ out/
 .classpath
 .factorypath
 .project
-.settings
+.settings/
 .springBeans
 .sts4-cache
 bin/
