@@ -15,7 +15,6 @@ public class Benchmark {
         Classroom[] classrooms = createClassrooms();
         TimeSlot[] timeSlots = createTimeSlots();
 
-        // Warm up the JVM before collecting timings.
         for (int i = 0; i < WARMUP_RUNS; i++) {
             runOptimizedSchedule(requests, classrooms, timeSlots);
             runLinearScanSchedule(requests, classrooms, timeSlots);
@@ -32,7 +31,6 @@ public class Benchmark {
 
         for (int i = 0; i < MEASURED_RUNS; i++) {
 
-            // Alternate execution order to reduce ordering bias.
             if (i % 2 == 0) {
                 baselineTotalTime += measureLinearScan(
                         requests,
@@ -71,9 +69,11 @@ public class Benchmark {
                         / baselineAverageMs) * 100.0;
 
         System.out.println();
-        System.out.println("COMPARATIVE BENCHMARK RESULTS");
+        System.out.println("HIGH-CONTENTION COMPARATIVE BENCHMARK");
         System.out.println("----------------------------------------");
         System.out.println("Requests per run: " + TOTAL_REQUESTS);
+        System.out.println("Classrooms: " + classrooms.length);
+        System.out.println("Time slots: " + timeSlots.length);
         System.out.println("Warm-up runs: " + WARMUP_RUNS);
         System.out.println("Measured runs: " + MEASURED_RUNS);
         System.out.println();
@@ -295,12 +295,16 @@ public class Benchmark {
     }
 
     private static Classroom[] createClassrooms() {
-        return new Classroom[]{
-                new Classroom("C101", 40),
-                new Classroom("C102", 50),
-                new Classroom("C103", 60),
-                new Classroom("C104", 80)
-        };
+        Classroom[] classrooms = new Classroom[12];
+
+        for (int i = 0; i < classrooms.length; i++) {
+            classrooms[i] = new Classroom(
+                    "C" + (101 + i),
+                    80
+            );
+        }
+
+        return classrooms;
     }
 
     private static TimeSlot[] createTimeSlots() {
@@ -314,25 +318,13 @@ public class Benchmark {
         };
 
         String[] startTimes = {
-                "08:00 AM",
                 "09:00 AM",
-                "10:00 AM",
-                "11:00 AM",
-                "12:00 PM",
-                "01:00 PM",
-                "02:00 PM",
-                "03:00 PM"
+                "10:00 AM"
         };
 
         String[] endTimes = {
-                "09:00 AM",
                 "10:00 AM",
-                "11:00 AM",
-                "12:00 PM",
-                "01:00 PM",
-                "02:00 PM",
-                "03:00 PM",
-                "04:00 PM"
+                "11:00 AM"
         };
 
         TimeSlot[] timeSlots =
