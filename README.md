@@ -1,21 +1,25 @@
 # Smart Timetable Generator
 
-A Java-based timetable generation system that automatically assigns teachers, subjects, student sections, classrooms, and time slots while preventing scheduling conflicts.
+A Java-based scheduling system that assigns classes to teachers, student sections, classrooms, and time slots while preventing timetable conflicts and respecting classroom capacity.
 
-## Features
+## Why this project
+
+Manual timetable creation becomes difficult when multiple constraints must be satisfied at the same time. This project models those constraints in Java and generates a valid schedule using a greedy allocation strategy supported by fast conflict checks.
+
+## Key Features
 
 - Automatic timetable generation
 - Teacher conflict detection
 - Classroom conflict detection
 - Student-section conflict detection
 - Classroom-capacity validation
-- Greedy room-allocation optimization
-- Largest classes scheduled first
+- Greedy scheduling of larger classes first
+- Smallest-suitable-room allocation
 - Interactive console input
-- Professional table-style timetable output
-- Benchmark testing with 120 class requests
+- Table-formatted timetable output
+- Comparative benchmark with 120 class requests
 
-## Technologies Used
+## Tech Stack
 
 - Java
 - Object-Oriented Programming
@@ -25,41 +29,36 @@ A Java-based timetable generation system that automatically assigns teachers, su
 - Greedy Algorithm
 - IntelliJ IDEA
 
-## Scheduling Logic
+## How the Scheduling Works
 
-The generator follows these steps:
+1. Class requests are copied and sorted by student strength in descending order.
+2. Classrooms are sorted by capacity in ascending order.
+3. For each class request, the generator checks available time slots.
+4. It chooses the smallest classroom that can hold the class.
+5. Before adding the schedule, it checks whether the teacher, classroom, or section is already booked for that slot.
+6. Valid schedules are stored and the corresponding booking maps are updated.
+7. If no valid room/time-slot combination exists, the request is reported as unscheduled.
 
-1. Sort class requests by student strength in descending order.
-2. Select an available time slot.
-3. Find the smallest classroom with sufficient capacity.
-4. Check teacher, classroom, and section availability.
-5. Add the class if no conflict exists.
-6. Try the next room or time slot if a conflict is found.
+## Conflict Detection
 
-## Conflict Rules
+The project uses three `HashMap` structures to track bookings:
 
-A schedule is rejected when:
+- teacher + day + time
+- classroom + day + time
+- section + day + time
 
-- The teacher is already assigned at the same time.
-- The classroom is already occupied at the same time.
-- The student section already has another class at the same time.
-- The classroom capacity is smaller than the number of students.
+A new schedule is rejected if any of those keys already exists.
 
-## Benchmark
+## Data Structures Used
 
-The project was tested using:
+### HashMap
+Used for average `O(1)` lookup of teacher, classroom, and section bookings.
 
-- 120 class-allocation requests
-- Five working days
-- Eight time slots per day
-- Four classrooms
+### LinkedList
+Stores the generated `ClassSchedule` objects in insertion order for timetable display.
 
-### Benchmark Result
-
-- Requests received: 120
-- Successfully scheduled: 120
-- Failed requests: 0
-- Benchmark status: Passed
+### Arrays
+Used for teachers, classrooms, time slots, and class requests.
 
 ## Project Structure
 
@@ -83,102 +82,134 @@ SmartTimetableGenerator/
                 └── TimetableGenerator.java
 ```
 
+## Main Classes
+
+- `Teacher` — stores teacher ID, name, and subject.
+- `Classroom` — stores room number and seating capacity.
+- `TimeSlot` — represents a day and start/end time.
+- `ClassRequest` — represents a section, teacher, and student count to schedule.
+- `ClassSchedule` — stores one completed timetable allocation.
+- `Timetable` — stores schedules and performs conflict checks.
+- `TimetableGenerator` — applies the greedy scheduling strategy.
+- `InteractiveMain` — accepts user input from the console.
+- `Benchmark` — compares HashMap-based conflict checks with a linear-scan baseline.
+
 ## How to Run
 
-### Demo Version
+Compile from the project root:
 
-Run:
-
-```text
-Main.java
+```bash
+javac -d out src/com/samiksha/timetable/*.java
 ```
 
-This runs the project using predefined teachers, sections, classrooms, and time slots.
+Run the demo:
 
-### Interactive Version
-
-Run:
-
-```text
-InteractiveMain.java
+```bash
+java -cp out com.samiksha.timetable.Main
 ```
 
-Enter the following information:
+Run the interactive version:
 
-- Teacher name
-- Subject
-- Student section
-- Number of students
-
-The system will automatically generate and display the timetable.
-
-### Benchmark Version
-
-Run:
-
-```text
-Benchmark.java
+```bash
+java -cp out com.samiksha.timetable.InteractiveMain
 ```
 
-This tests the timetable generator using 120 class-allocation requests.
+Run the comparative benchmark:
 
-## Algorithm Complexity
+```bash
+java -cp out com.samiksha.timetable.Benchmark
+```
+
+## Comparative Benchmark
+
+`Benchmark.java` evaluates two implementations on the same high-contention scheduling workload:
+
+1. **Optimized version** — uses `HashMap` booking indexes for average `O(1)` conflict checks.
+2. **Baseline version** — scans previously created schedules linearly to detect conflicts.
+
+### Benchmark configuration
+
+- 120 class requests
+- 12 classrooms
+- 10 weekly time slots
+- Every classroom can accommodate every generated class request
+- 200 JVM warm-up runs
+- 1,000 measured runs
+- Execution order alternates between implementations to reduce ordering bias
+
+Both implementations schedule the same 120 requests. Only the conflict-detection strategy changes.
+
+### Validation result
+
+Three full validation runs in a Java 21 environment measured approximately:
+
+- **46.13% lower average runtime**
+- **47.20% lower average runtime**
+- **46.45% lower average runtime**
+
+This supports a conservative claim of **30%+ runtime improvement under the documented high-contention benchmark** compared with the linear-scan baseline.
+
+> Microbenchmark results vary by JVM, hardware, and system load. The percentage above applies specifically to the documented comparative benchmark and should not be interpreted as a universal speedup for every timetable workload.
+
+## Time Complexity
 
 Let:
 
-- `R` represent the number of class requests.
-- `T` represent the number of available time slots.
-- `C` represent the number of classrooms.
+- `R` = number of class requests
+- `T` = number of time slots
+- `C` = number of classrooms
 
-The approximate time complexity is:
+Sorting requests costs:
 
 ```text
-O(R log R + R × T × C)
+O(R log R)
 ```
 
-Sorting the requests requires `O(R log R)` time.
+Sorting classrooms costs:
 
-For every request, the generator may check multiple time slots and classrooms, requiring approximately `O(R × T × C)` time.
+```text
+O(C log C)
+```
 
-HashMap provides average `O(1)` conflict checking.
+In the worst case, each request may inspect every time slot and classroom:
 
-## Optimization Strategy
+```text
+O(R × T × C)
+```
 
-The system uses a greedy optimization strategy:
+Overall:
 
-1. Class requests are sorted by student strength in descending order.
-2. Larger classes are scheduled before smaller classes.
-3. The smallest suitable classroom is selected whenever possible.
-4. This reduces classroom-capacity wastage and prevents larger classes from losing access to suitable rooms.
+```text
+O(R log R + C log C + R × T × C)
+```
 
-## Concepts Used
+Conflict checks use `HashMap.containsKey()`, which is average `O(1)`.
 
-- Classes and objects
-- Constructors
+## Concepts Demonstrated
+
+- Object-Oriented Programming
 - Encapsulation
-- Method overloading
-- Arrays
-- LinkedList
-- HashMap
-- Enhanced for loops
-- Greedy sorting
+- Constructor overloading
+- Collections and arrays
+- Hash-based lookup
+- Greedy allocation
 - Lambda expressions
 - Conflict detection
-- Time-complexity analysis
+- Complexity analysis
+- Comparative benchmarking with `System.nanoTime()`
 
 ## Future Improvements
 
-- Graphical user interface
-- Database integration
-- CSV import and export
-- Genetic Algorithm optimization
+- CSV import/export
+- Persistent database storage
 - Faculty preference handling
-- Break-time handling
 - Laboratory scheduling
-- Timetable export to PDF
-- Web-based timetable dashboard
+- Break-time constraints
+- GUI or web dashboard
+- Automated unit tests
+- Alternative optimization approaches for larger scheduling problems
 
 ## Author
 
-Samiksha Nigam  
-B.Tech - Artificial Intelligence and Data Science
+**Samiksha Nigam**  
+B.Tech — Artificial Intelligence and Data Science
