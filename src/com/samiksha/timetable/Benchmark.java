@@ -5,7 +5,7 @@ import java.util.LinkedList;
 
 public class Benchmark {
 
-    private static final int TOTAL_REQUESTS = 120;
+    private static final int TOTAL_REQUESTS = 240;
     private static final int WARMUP_RUNS = 200;
     private static final int MEASURED_RUNS = 1000;
 
@@ -20,41 +20,19 @@ public class Benchmark {
             runLinearScanSchedule(requests, classrooms, timeSlots);
         }
 
-        int optimizedScheduled =
-                runOptimizedSchedule(requests, classrooms, timeSlots);
-
-        int baselineScheduled =
-                runLinearScanSchedule(requests, classrooms, timeSlots);
+        int optimizedScheduled = runOptimizedSchedule(requests, classrooms, timeSlots);
+        int baselineScheduled = runLinearScanSchedule(requests, classrooms, timeSlots);
 
         long optimizedTotalTime = 0L;
         long baselineTotalTime = 0L;
 
         for (int i = 0; i < MEASURED_RUNS; i++) {
-
             if (i % 2 == 0) {
-                baselineTotalTime += measureLinearScan(
-                        requests,
-                        classrooms,
-                        timeSlots
-                );
-
-                optimizedTotalTime += measureOptimized(
-                        requests,
-                        classrooms,
-                        timeSlots
-                );
+                baselineTotalTime += measureLinearScan(requests, classrooms, timeSlots);
+                optimizedTotalTime += measureOptimized(requests, classrooms, timeSlots);
             } else {
-                optimizedTotalTime += measureOptimized(
-                        requests,
-                        classrooms,
-                        timeSlots
-                );
-
-                baselineTotalTime += measureLinearScan(
-                        requests,
-                        classrooms,
-                        timeSlots
-                );
+                optimizedTotalTime += measureOptimized(requests, classrooms, timeSlots);
+                baselineTotalTime += measureLinearScan(requests, classrooms, timeSlots);
             }
         }
 
@@ -69,7 +47,7 @@ public class Benchmark {
                         / baselineAverageMs) * 100.0;
 
         System.out.println();
-        System.out.println("HIGH-CONTENTION COMPARATIVE BENCHMARK");
+        System.out.println("STRESS-TEST COMPARATIVE BENCHMARK");
         System.out.println("----------------------------------------");
         System.out.println("Requests per run: " + TOTAL_REQUESTS);
         System.out.println("Classrooms: " + classrooms.length);
@@ -77,30 +55,11 @@ public class Benchmark {
         System.out.println("Warm-up runs: " + WARMUP_RUNS);
         System.out.println("Measured runs: " + MEASURED_RUNS);
         System.out.println();
-
-        System.out.println(
-                "Optimized scheduled: " + optimizedScheduled
-        );
-
-        System.out.println(
-                "Linear-scan scheduled: " + baselineScheduled
-        );
-
-        System.out.printf(
-                "Optimized average time: %.4f ms%n",
-                optimizedAverageMs
-        );
-
-        System.out.printf(
-                "Linear-scan average time: %.4f ms%n",
-                baselineAverageMs
-        );
-
-        System.out.printf(
-                "Measured improvement: %.2f%%%n",
-                improvementPercent
-        );
-
+        System.out.println("Optimized scheduled: " + optimizedScheduled);
+        System.out.println("Linear-scan scheduled: " + baselineScheduled);
+        System.out.printf("Optimized average time: %.4f ms%n", optimizedAverageMs);
+        System.out.printf("Linear-scan average time: %.4f ms%n", baselineAverageMs);
+        System.out.printf("Measured improvement: %.2f%%%n", improvementPercent);
         System.out.println();
         System.out.println(
                 "Note: Runtime results vary by JVM, hardware, and system load."
@@ -113,13 +72,7 @@ public class Benchmark {
             TimeSlot[] timeSlots
     ) {
         long start = System.nanoTime();
-
-        runOptimizedSchedule(
-                requests,
-                classrooms,
-                timeSlots
-        );
-
+        runOptimizedSchedule(requests, classrooms, timeSlots);
         return System.nanoTime() - start;
     }
 
@@ -129,13 +82,7 @@ public class Benchmark {
             TimeSlot[] timeSlots
     ) {
         long start = System.nanoTime();
-
-        runLinearScanSchedule(
-                requests,
-                classrooms,
-                timeSlots
-        );
-
+        runLinearScanSchedule(requests, classrooms, timeSlots);
         return System.nanoTime() - start;
     }
 
@@ -145,13 +92,9 @@ public class Benchmark {
             TimeSlot[] timeSlots
     ) {
         TimetableGenerator generator =
-                new TimetableGenerator(
-                        classrooms,
-                        timeSlots
-                );
+                new TimetableGenerator(classrooms, timeSlots);
 
         generator.generateSchedule(requests);
-
         return generator.getScheduledCount();
     }
 
@@ -181,19 +124,14 @@ public class Benchmark {
                         )
         );
 
-        LinkedList<ClassSchedule> schedules =
-                new LinkedList<>();
+        LinkedList<ClassSchedule> schedules = new LinkedList<>();
 
         for (ClassRequest request : sortedRequests) {
-
             boolean scheduled = false;
 
             for (TimeSlot timeSlot : timeSlots) {
-
                 for (Classroom classroom : sortedClassrooms) {
-
-                    if (classroom.getCapacity()
-                            < request.getStudentCount()) {
+                    if (classroom.getCapacity() < request.getStudentCount()) {
                         continue;
                     }
 
@@ -236,11 +174,7 @@ public class Benchmark {
             TimeSlot timeSlot
     ) {
         for (ClassSchedule existing : schedules) {
-
-            if (!sameTimeSlot(
-                    existing.getTimeSlot(),
-                    timeSlot
-            )) {
+            if (!sameTimeSlot(existing.getTimeSlot(), timeSlot)) {
                 continue;
             }
 
@@ -254,8 +188,7 @@ public class Benchmark {
                 return true;
             }
 
-            if (existing.getSection()
-                    .equals(request.getSection())) {
+            if (existing.getSection().equals(request.getSection())) {
                 return true;
             }
         }
@@ -273,11 +206,9 @@ public class Benchmark {
     }
 
     private static ClassRequest[] createRequests() {
-        ClassRequest[] requests =
-                new ClassRequest[TOTAL_REQUESTS];
+        ClassRequest[] requests = new ClassRequest[TOTAL_REQUESTS];
 
         for (int i = 0; i < TOTAL_REQUESTS; i++) {
-
             Teacher teacher = new Teacher(
                     i + 1,
                     "Teacher " + (i + 1),
@@ -308,7 +239,6 @@ public class Benchmark {
     }
 
     private static TimeSlot[] createTimeSlots() {
-
         String[] days = {
                 "Monday",
                 "Tuesday",
@@ -319,12 +249,16 @@ public class Benchmark {
 
         String[] startTimes = {
                 "09:00 AM",
-                "10:00 AM"
+                "10:00 AM",
+                "11:00 AM",
+                "12:00 PM"
         };
 
         String[] endTimes = {
                 "10:00 AM",
-                "11:00 AM"
+                "11:00 AM",
+                "12:00 PM",
+                "01:00 PM"
         };
 
         TimeSlot[] timeSlots =
@@ -334,13 +268,11 @@ public class Benchmark {
 
         for (String day : days) {
             for (int i = 0; i < startTimes.length; i++) {
-
                 timeSlots[index] = new TimeSlot(
                         day,
                         startTimes[i],
                         endTimes[i]
                 );
-
                 index++;
             }
         }
