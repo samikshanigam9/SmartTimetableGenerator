@@ -12,9 +12,18 @@ public class TimetableGenerator {
             Classroom[] classrooms,
             TimeSlot[] timeSlots
     ) {
-        this.classrooms = classrooms;
-        this.timeSlots = timeSlots;
+        this.classrooms = classrooms.clone();
+        this.timeSlots = timeSlots.clone();
         this.timetable = new Timetable();
+
+        Arrays.sort(
+                this.classrooms,
+                (room1, room2) ->
+                        Integer.compare(
+                                room1.getCapacity(),
+                                room2.getCapacity()
+                        )
+        );
     }
 
     public void generateSchedule(Teacher[] teachers) {
