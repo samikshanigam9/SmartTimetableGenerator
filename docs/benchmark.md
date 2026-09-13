@@ -31,6 +31,25 @@ Both implementations must schedule all 240 requests before timing proceeds; a mi
 
 Runtime reduction (%) = `(baseline average − optimized average) / baseline average × 100`.
 
+## Verified CI result — September 13, 2026
+
+[CI run 34733512983](https://github.com/samikshanigam9/SmartTimetableGenerator/actions/runs/34733512983/job/103660640025) tested PR head `43051f4166b2bcf3c1219877625be9031248edf9` via merge ref `8bfe36f6eb8df02f2c1b85a7761f76caba11ca77`. Both Java 11 and Java 21 jobs passed all 10 tests.
+
+Benchmark environment: GitHub-hosted Ubuntu 24.04 x64, runner image `20260907.300.1`, Temurin `21.0.12+1`. CPU model was not captured. This is one process run, not a guarantee across machines.
+
+```text
+Requests per run: 240
+Classrooms: 12
+Time slots: 20
+Warm-up runs: 200
+Measured runs: 1000
+Optimized scheduled: 240
+Linear-scan scheduled: 240
+Optimized average time: 4.0611 ms
+Linear-scan average time: 10.2858 ms
+Measured improvement: 60.52%
+```
+
 ## Previously recorded results
 
 The September 12, 2026 [README revision](https://github.com/samikshanigam9/SmartTimetableGenerator/blob/dc2744625b46c670093ef801710f7e328f6fa4c9/README.md) recorded these three Java 21 runs:
