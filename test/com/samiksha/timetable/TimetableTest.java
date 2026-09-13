@@ -8,6 +8,18 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class TimetableTest {
 
+    @Test
+    void acceptsSameTeacherRoomAndSectionAtDifferentTimes() {
+        Timetable timetable = new Timetable();
+        Teacher teacher = new Teacher(1, "A", "DSA");
+        Classroom room = new Classroom("C101", 60);
+        assertTrue(timetable.addSchedule(new ClassSchedule(
+                teacher, room, slot("Monday", "09:00 AM", "10:00 AM"), "A1", 40)));
+        assertTrue(timetable.addSchedule(new ClassSchedule(
+                teacher, room, slot("Monday", "10:00 AM", "11:00 AM"), "A1", 40)));
+        assertEquals(2, timetable.getScheduleCount());
+    }
+
     private static TimeSlot slot(String day, String start, String end) {
         return new TimeSlot(day, start, end);
     }

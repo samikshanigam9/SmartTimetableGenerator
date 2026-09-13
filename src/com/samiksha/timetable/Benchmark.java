@@ -23,6 +23,12 @@ public class Benchmark {
         int optimizedScheduled = runOptimizedSchedule(requests, classrooms, timeSlots);
         int baselineScheduled = runLinearScanSchedule(requests, classrooms, timeSlots);
 
+        if (optimizedScheduled != TOTAL_REQUESTS || baselineScheduled != TOTAL_REQUESTS) {
+            throw new IllegalStateException(
+                    "Both benchmark implementations must schedule all " + TOTAL_REQUESTS + " requests"
+            );
+        }
+
         long optimizedTotalTime = 0L;
         long baselineTotalTime = 0L;
 

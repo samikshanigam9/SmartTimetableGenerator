@@ -26,3 +26,7 @@ jobs:
 
       - name: Build and test
         run: mvn --batch-mode clean test
+
+      - name: Run comparative benchmark
+        if: matrix.java == '21'
+        run: java -cp target/classes com.samiksha.timetable.Benchmark
