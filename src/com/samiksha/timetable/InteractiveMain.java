@@ -72,6 +72,9 @@ public class InteractiveMain {
                     "Enter details for class " + (i + 1)
             );
 
+            System.out.print("Teacher ID (reuse for the same teacher): ");
+            int teacherId = Integer.parseInt(scanner.nextLine());
+
             System.out.print("Teacher name: ");
             String teacherName = scanner.nextLine();
 
@@ -87,7 +90,7 @@ public class InteractiveMain {
                     Integer.parseInt(scanner.nextLine());
 
             Teacher teacher = new Teacher(
-                    i + 1,
+                    teacherId,
                     teacherName,
                     subject
             );

@@ -4,10 +4,10 @@
 
 A Java-based timetable generation system built using `HashMap`, `LinkedList`, and object-oriented programming principles.
 
-## Resume-Aligned Project Summary
+## Project Highlights
 
 - Built a Java-based timetable generation system capable of scheduling **100+ class allocations** while minimizing scheduling conflicts.
-- Optimized scheduling and data retrieval using **HashMap and LinkedList**, improving timetable generation efficiency by a conservative **30%** in the documented benchmark comparison.
+- Uses **HashMap** booking indexes for average constant-time conflict lookup and **LinkedList** to store schedules. Includes a reproducible comparison against linear-scan conflict checks.
 - Designed reusable Java modules using **object-oriented programming principles**, improving code maintainability and supporting scalable timetable generation.
 
 ## Tech Stack
@@ -109,6 +109,11 @@ SmartTimetableGenerator/
 └── README.md
 ```
 
+## Requirements
+
+- JDK 11 or newer
+- Maven 3.8 or newer
+
 ## Run the Project
 
 Using Maven:
@@ -124,6 +129,8 @@ Interactive version:
 java -cp target/classes com.samiksha.timetable.InteractiveMain
 ```
 
+In interactive mode, enter the **same teacher ID** for every class taught by the same person, even across different subjects. Give different teachers distinct IDs, including teachers who share a name. Each class retains its own subject.
+
 See a verified project run in [`docs/sample-output.md`](docs/sample-output.md).
 
 ## Performance Validation
@@ -133,9 +140,22 @@ The project includes a repeatable comparison between:
 - the current `HashMap`-based conflict lookup
 - a linear-scan conflict-checking baseline
 
-The benchmark uses a workload of more than 100 class requests and consistently exceeds the **30% improvement** reported on the resume. The resume therefore keeps the more conservative **30%** figure.
+The stress workload contains **240 class requests, 12 rooms, and 20 weekly slots**. It uses 200 warm-up runs and 1,000 measured runs per implementation, alternating execution order. Both implementations use the same greedy ordering and a `LinkedList`; the comparison measures the effect of HashMap booking indexes versus scanning prior schedules, including their construction overhead.
 
-> Runtime varies by JVM, hardware, and system load. The 30% figure refers to the documented benchmark comparison, not a guaranteed improvement for every possible input.
+Run it after compiling:
+
+```bash
+java -cp target/classes com.samiksha.timetable.Benchmark
+```
+
+See [benchmark methodology and recorded results](docs/benchmark.md). Runtime reduction is workload- and environment-specific; no fixed 30% improvement is guaranteed. The stress fixture uses unique teachers/sections and equal-capacity rooms, so it mainly exercises room contention, not every real timetable constraint.
+
+## Scheduling Assumptions
+
+- Supply predefined, non-overlapping time slots with consistent day/time strings. Conflict keys compare exact slots; arbitrary overlapping intervals are not detected.
+- Teacher availability means absence of another booking in the supplied slot; personal availability calendars are not modeled.
+- Teacher IDs uniquely identify people, and section/room identifiers must be consistent.
+- The greedy strategy tries earlier slots first and chooses the smallest available suitable room in that slot. It does not guarantee the maximum possible number of allocations.
 
 ## Complexity
 
@@ -147,13 +167,21 @@ Let:
 
 ```text
 Request sorting:   O(R log R)
+Classroom sorting: O(C log C)
 Scheduling:        O(R × T × C)
 Conflict lookup:   average O(1) using HashMap
 ```
 
-## Repository Verification
+Overall expected time: `O(R log R + C log C + R × T × C)`, assuming bounded identifier lengths and average constant-time HashMap operations. Auxiliary space: `O(R + C + T)` for copied inputs, sorting, schedules, and booking indexes.
 
-The repository also contains Maven configuration, JUnit tests, and GitHub Actions CI so the existing project can be built and checked automatically. These are **verification tools only** and do not change the project scope described on the resume.
+## Build and Test
+
+```bash
+mvn clean test
+mvn package
+```
+
+GitHub Actions runs the JUnit suite on Java 11 and 21 for pushes and pull requests targeting `main`. Tests cover teacher, room, and section conflicts; teacher reuse at another time; room-capacity selection and rejection; and teacher identity across interactive class entries.
 
 ## License
 
